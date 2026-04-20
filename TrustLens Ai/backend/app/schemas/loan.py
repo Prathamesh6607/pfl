@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Dict, List, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -60,6 +60,39 @@ class LoanApplicationResponse(BaseModel):
     expected_loss: float
     insurance_recommended: bool
     ekyc_verified: bool
-    offers: list[Offer]
-    explanations: list[ExplainabilityItem]
-    decision_reasons: list[str]
+    offers: List[Offer]
+    explanations: List[ExplainabilityItem]
+    decision_reasons: List[str]
+
+
+DocumentType = Literal["pan", "aadhaar", "salary", "bank", "address", "photo"]
+DocumentVerdict = Literal["verified", "review_required", "rejected"]
+
+
+class DocumentVerificationResponse(BaseModel):
+    document_type: DocumentType
+    filename: str
+    ai_verdict: DocumentVerdict
+    confidence: float
+    checks: Dict[str, bool]
+    issues: List[str]
+    extracted_hints: Dict[str, str]
+    verified_with_backend: bool = True
+
+
+class SessionArtifactRequest(BaseModel):
+    session_id: str = Field(min_length=1, max_length=80)
+    user_id: str = Field(min_length=1, max_length=64)
+    transcript_text: str = ""
+    consent_captured: bool = False
+    consent_phrase: str = ""
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    device: str = ""
+    ip_address: str = ""
+
+
+class SessionArtifactResponse(BaseModel):
+    artifact_id: int
+    session_id: str
+    stored: bool = True

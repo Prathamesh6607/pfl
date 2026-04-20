@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
+from typing import List, Union
 
 import yaml
 
@@ -9,11 +10,11 @@ from app.schemas.loan import LoanApplicationRequest
 @dataclass
 class RuleOutcome:
     decision: str
-    reasons: list[str]
+    reasons: List[str]
 
 
 class RuleEngine:
-    def __init__(self, thresholds_path: str | Path):
+    def __init__(self, thresholds_path: Union[str, Path]):
         with open(thresholds_path, "r", encoding="utf-8") as fh:
             self.thresholds = yaml.safe_load(fh)
 
@@ -24,7 +25,7 @@ class RuleEngine:
         fraud_score: float,
     ) -> RuleOutcome:
         t = self.thresholds["risk"]
-        reasons: list[str] = []
+        reasons: List[str] = []
 
         if request.credit_score < t["credit_score_hard_reject"]:
             reasons.append("credit_score_below_threshold")

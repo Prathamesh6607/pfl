@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { t as getT, languageName } from '@/lib/i18n';
 import { calculateEMI, defaultRate } from '@/lib/loanUtils';
-import { applyLoanDecision } from '@/services/loanEngineClient';
+import { applyLoanDecision, captureSessionArtifact, verifyLoanDocument } from '@/services/loanEngineClient';
 
 import TopBar from '@/components/trustlens/TopBar';
 import Hero from '@/components/trustlens/Hero';
@@ -170,6 +170,18 @@ Keep it practical, ~180-240 words total. Avoid jargon.`;
 
   const riskLabelMap = { Low: T.low, Medium: T.medium, High: T.high };
 
+  const verifyDocument = async (docType, file) => {
+    return verifyLoanDocument(docType, file);
+  };
+
+  const storeSessionArtifact = async (artifactPayload) => {
+    try {
+      await captureSessionArtifact(artifactPayload);
+    } catch {
+      // Do not block the UX if session artifact storage fails.
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <TopBar T={T} language={language} setLanguage={setLanguage} onVideo={() => setVideoOpen(true)} />
@@ -211,7 +223,7 @@ Keep it practical, ~180-240 words total. Avoid jargon.`;
                 risk={result.risk_level}
                 riskLabel={riskLabelMap[result.risk_level] || result.risk_level}
               />
-              <DocumentChecklist T={T} />
+              <DocumentChecklist T={T} onVerify={verifyDocument} />
             </div>
             <SummaryCard T={T} summary={result.summary} emi={result.emi} language={language} />
           </motion.section>
@@ -223,7 +235,13 @@ Keep it practical, ~180-240 words total. Avoid jargon.`;
       </footer>
 
       <ChatPanel T={T} language={language} context={{ ...data, ...(result || {}) }} />
-      <VideoCallModal T={T} open={videoOpen} onClose={() => setVideoOpen(false)} />
+      <VideoCallModal
+        T={T}
+        open={videoOpen}
+        onClose={() => setVideoOpen(false)}
+        onSessionArtifact={storeSessionArtifact}
+        userId="web-user-001"
+      />
     </div>
   );
 }

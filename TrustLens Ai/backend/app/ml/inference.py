@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Dict, List
 
 import numpy as np
 import shap
@@ -13,11 +14,11 @@ class InferenceOutput:
     lgd: float
     fraud_score: float
     insurance_recommended: bool
-    top_features: list[dict]
+    top_features: List[Dict]
 
 
 class InferenceEngine:
-    def __init__(self, models: dict):
+    def __init__(self, models: Dict):
         self.models = models
 
     def predict(self, request: LoanApplicationRequest) -> InferenceOutput:
@@ -56,9 +57,10 @@ class InferenceEngine:
     def _predict_fraud(self, frame):
         model = self.models["fraud"]
         try:
-            score = model.score_samples(frame)[0]
-            # Convert anomaly score to [0, 1] where higher means riskier.
-            return float(1 / (1 + np.exp(score)))
+            decision = float(model.decision_function(frame)[0])
+            # decision_function > 0 generally means inlier (safer), < 0 means outlier (riskier).
+            calibrated = 1 / (1 + np.exp(8.0 * decision))
+            return float(np.clip(calibrated, 0.01, 0.99))
         except Exception:
             return 0.12
 
@@ -71,10 +73,11 @@ class InferenceEngine:
                 return False
         return False
 
-    def _shap_explain_pd(self, frame) -> list[dict]:
+    def _shap_explain_pd(self, frame) -> List[Dict]:
         model = self.models["pd"]
         try:
-            explainer = shap.TreeExplainer(model)
+            # Use TreeExplainer with check_additivity=False for faster computation
+            explainer = shap.TreeExplainer(model, check_additivity=False)
             shap_values = explainer.shap_values(frame)
             if isinstance(shap_values, list):
                 shap_values = shap_values[1]
@@ -82,12 +85,22 @@ class InferenceEngine:
             order = np.argsort(values)[::-1][:3]
             return [
                 {"feature": FEATURE_COLUMNS[i], "impact": float(values[i])}
-                for i in order
+                for i in order if i < len(FEATURE_COLUMNS)
             ]
         except Exception:
-            # Fallback if SHAP fails on untrained model.
+            # Fallback to model importances weighted by request values for dynamic explanations.
+            values = np.abs(frame.iloc[0].to_numpy(dtype=float))
+            if hasattr(model, "feature_importances_"):
+                importances = np.abs(np.array(model.feature_importances_, dtype=float))
+                if len(importances) == len(values):
+                    impacts = importances * values
+                else:
+                    impacts = values
+            else:
+                impacts = values
+
+            order = np.argsort(impacts)[::-1][:3]
             return [
-                {"feature": "credit_score", "impact": 0.5},
-                {"feature": "monthly_income", "impact": 0.3},
-                {"feature": "loan_amount_requested", "impact": 0.2},
+                {"feature": FEATURE_COLUMNS[i], "impact": float(impacts[i])}
+                for i in order if i < len(FEATURE_COLUMNS)
             ]

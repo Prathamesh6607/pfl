@@ -146,7 +146,12 @@ class LoanDecisionService:
             "expected_loss": expected_loss,
         }
         AuditService.write(db, "loan_decision", str(app.id), audit_payload)
-        log_audit_event.delay("loan_decision", str(app.id), audit_payload)
+        if self.cache_service.available:
+            try:
+                log_audit_event.delay("loan_decision", str(app.id), audit_payload)
+            except Exception:
+                # Celery broker may be temporarily unavailable.
+                pass
 
         response = LoanApplicationResponse(
             application_id=str(app.id),

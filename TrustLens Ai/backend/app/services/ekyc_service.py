@@ -1,10 +1,11 @@
 from dataclasses import dataclass
+from typing import Optional
 
 
 @dataclass
 class EkycResult:
     verified: bool
-    auth_token: str | None
+    auth_token: Optional[str]
     message: str
 
 

@@ -8,8 +8,8 @@ class Settings(BaseSettings):
     app_host: str = "0.0.0.0"
     app_port: int = 8000
 
-    database_url: str = "postgresql+psycopg://postgres:postgres@postgres:5432/loans"
-    redis_url: str = "redis://redis:6379/0"
+    database_url: str = "sqlite:///./loan_engine.db"
+    redis_url: str = "redis://localhost:6379/0"
 
     model_dir: str = "artifacts"
     pd_model_path: str = "artifacts/pd_xgb_model.joblib"
@@ -23,8 +23,8 @@ class Settings(BaseSettings):
     insurance_premium_pct_annual: float = 0.012
     fraud_threshold: float = 0.62
 
-    celery_broker_url: str = "redis://redis:6379/1"
-    celery_result_backend: str = "redis://redis:6379/2"
+    celery_broker_url: str = "redis://localhost:6379/1"
+    celery_result_backend: str = "redis://localhost:6379/2"
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
