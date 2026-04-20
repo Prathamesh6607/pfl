@@ -1,0 +1,13 @@
+risk:
+  foir_safe: 0.4
+  foir_medium: 0.6
+  credit_score_hard_reject: 650
+  credit_score_full_approval: 720
+  min_business_vintage_years: 1.0
+  fraud_threshold: 0.62
+insurance:
+  loan_amount_trigger: 500000
+  tenure_trigger_months: 24
+  age_trigger: 35
+  coverage_pct: 0.25
+  premium_pct_annual: 0.012

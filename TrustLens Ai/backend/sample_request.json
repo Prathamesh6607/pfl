@@ -1,0 +1,18 @@
+{
+  "user_id": "biz-user-001",
+  "age": 38,
+  "employment_type": "self-employed",
+  "monthly_income": 120000,
+  "loan_amount_requested": 750000,
+  "loan_tenure_months": 36,
+  "existing_emi": 10000,
+  "credit_score": 715,
+  "business_vintage_years": 4,
+  "industry_risk": "medium",
+  "bank_balance_avg": 210000,
+  "cashflow_volatility": 0.22,
+  "insurance_consent": true,
+  "insurance_selected": true,
+  "ekyc_consent": true,
+  "ekyc_otp": "123456"
+}
